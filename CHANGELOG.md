@@ -6,6 +6,12 @@ history lives in the original project's git tags.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [12.18.0] - 2026-09-18
+
+### Features
+- **XLoot now runs on WoW Forever.** Support for Forever is brand new, so if anything looks off there,
+  please let us know on GitHub, CurseForge or Discord.
+
 ## [12.17.2] - 2026-09-09
 
 ### Improvements
