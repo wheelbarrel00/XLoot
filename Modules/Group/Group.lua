@@ -1,6 +1,6 @@
 local addon, L = XLoot:NewModule("Group")
 XLootGroup = addon
-local opt, anchor, alert_anchor, mouse_focus, Skinner
+local opt, anchor, mouse_focus, Skinner
 local rolls = {}
 local auto_rolled = {}
 local pending_rolls = {}
@@ -52,7 +52,6 @@ local defaults = {
 	profile = {
 		role_icon = true,
 		win_icon = false,
-		show_decided = true,
 		show_undecided = false,
 		show_time_remaining = false,
 		text_ilvl = false,
@@ -69,17 +68,6 @@ local defaults = {
 		equip_prefix = true,
 		prefix_equippable = "*",
 		prefix_upgrade = "+",
-
-		hook_alert = false,
-		alert_skin = true,
-		alert_alpha = 1,
-		alert_scale = 1,
-		alert_offset = 4,
-		alert_background = false,
-		alert_icon_frame = false,
-
-		hook_bonus = false,
-		bonus_skin = true,
 
 		roll_button_size = 28,
 		roll_width = 325,
@@ -98,15 +86,6 @@ local defaults = {
 			y = UIParent:GetHeight() * .4
 		},
 
-		alert_anchor = {
-			visible = true,
-			direction = 'up',
-			draggable = true,
-			scale = 1.0,
-			x = AlertFrame:GetLeft(),
-			y = AlertFrame:GetTop()
-		},
-
 		roll_status = false,
 		track_all = false,
 		track_player_roll = false,
@@ -114,8 +93,7 @@ local defaults = {
 		track_threshold = 3,
 
 		expire_won = 20,
-		expire_lost = 10,
-		shown_hook_warning = false
+		expire_lost = 10
 	}
 }
 
@@ -179,10 +157,7 @@ function addon:OnEnable()
 		anchor = { r = .4, g = .4, b = .4, a = .6, gradient = false },
 		anchor_pretty = { r = .6, g = .6, b = .6, a = .8 },
 		row = { gradient = false },
-		item = { backdrop = false },
-		alert = { gradient = true },
-		alert_item = { gradient = true, backdrop = false },
-		bonus = { }
+		item = { backdrop = false }
 	}, 'row')
 
 	anchor = XLoot.Stack:CreateStaticStack(function() return RollFramePrototype:New() end, L.anchor, opt.roll_anchor)
@@ -190,15 +165,7 @@ function addon:OnEnable()
 	anchor:Scale(opt.roll_anchor.scale)
 	addon.anchor = anchor
 
-	alert_anchor = XLoot.Stack:CreateAnchor(L.alert_anchor, opt.alert_anchor)
-	alert_anchor:SetFrameLevel(7)
-	addon.alert_anchor = alert_anchor
-	--  DISABLED-PATCH: LEGION PRE-PATCH
-	alert_anchor.Show = alert_anchor.Hide
-	alert_anchor:Hide()
-
 	Skinner:Skin(anchor, XLoot.opt.skin_anchors and 'anchor_pretty' or 'anchor')
-	Skinner:Skin(alert_anchor, XLoot.opt.skin_anchors and 'anchor_pretty' or 'anchor')
 
 	local fader = CreateFrame('Frame')
 	local timer = 0
@@ -799,87 +766,9 @@ function addon:MODIFIER_STATE_CHANGED()
 	end
 end
 
-local alert_frames = {}
-function addon.AlertFrameHook(alert)
-	local elements = alert_frames[alert]
-	if not elements then
-		elements = {}
-		if not (opt.alert_background and opt.alert_icon_frame) then
-			local name
-			if alert.ItemName then
-				name = alert.ItemName
-				alert.Label:ClearAllPoints()
-				alert.Label:SetPoint('TOPLEFT', alert.Icon, 'TOPRIGHT', 15, -5)
-			elseif alert.BaseQualityItemName then
-				name = alert.BaseQualityItemName
-				alert.TitleText:ClearAllPoints()
-				alert.TitleText:SetPoint('TOPLEFT', alert.Icon, 'TOPRIGHT', 15, -2)
-			elseif alert.Amount then
-				name = alert.Amount
-				alert.Label:ClearAllPoints()
-				alert.Label:SetPoint('TOPLEFT', alert.Icon, 'TOPRIGHT', 15, -2)
-			end
-			name:ClearAllPoints()
-			name:SetPoint('LEFT', alert.Icon, 'RIGHT', 10, -6)
-		end
-		if opt.alert_skin then
-			local overlay = CreateFrame('Frame', nil, alert, BackdropTemplateMixin and "BackdropTemplate")
-			overlay:SetPoint('TOPLEFT', 11, -11)
-			overlay:SetPoint('BOTTOMRIGHT', -11, 11)
-			overlay:SetFrameLevel(alert:GetFrameLevel())
-			elements.overlay = overlay
-			Skinner:Skin(overlay, 'alert')
-			if opt.alert_background then
-				local backdrop = CreateFrame('Frame', nil, alert, BackdropTemplateMixin and "BackdropTemplate")
-				backdrop:SetAllPoints(overlay)
-				backdrop:SetFrameLevel(alert:GetFrameLevel()-1)
-				overlay.gradient:SetParent(backdrop)
-			end
-
-			local icon_frame = CreateFrame('Frame', nil, alert, BackdropTemplateMixin and "BackdropTemplate")
-			icon_frame:SetPoint('CENTER', alert.Icon, 'CENTER', 0, 0)
-			icon_frame:SetWidth(alert.Icon:GetWidth() + 4)
-			icon_frame:SetHeight(alert.Icon:GetHeight() + 4)
-			elements.icon_frame = icon_frame
-			Skinner:Skin(icon_frame, 'alert_item')
-		end
-
-		alert_frames[alert] = elements
-	end
-	alert.Background:SetShown(opt.alert_background)
-	alert.IconBorder:SetShown(opt.alert_icon_frame)
-	alert.BaseQualityBorder:SetShown(opt.alert_icon_frame)
-	alert.UpgradeQualityBorder:SetShown(opt.alert_icon_frame)
-	alert:SetAlpha(opt.alert_alpha)
-	alert:SetScale(opt.alert_scale)
-
-	if opt.alert_skin then
-		local c
-		if alert.hyperlink then
-			local _, _, rarity = GetItemInfo(alert.hyperlink)
-			c = ITEM_QUALITY_COLORS[rarity]
-		else
-			c = {r = 1, g = .8, b = 0.1}
-		end
-		if type(c) == "table" then -- Sanity check due to 5.4.1 reported error
-			elements.overlay:SetGradientColor(c.r, c.g, c.b, .2)
-			elements.icon_frame:SetGradientColor(c.r, c.g, c.b, .2)
-			elements.overlay:SetBorderColor(c.r, c.g, c.b)
-			elements.icon_frame:SetBorderColor(c.r, c.g, c.b)
-		end
-	end
-end
-
-local AlertFrameTables = {
-	'LOOT_WON_ALERT_FRAMES',
-	'LOOT_UPGRADE_ALERT_FRAMES',
-	'MONEY_WON_ALERT_FRAMES'
-}
-
 function addon.SlashHandler(msg)
 	if msg == 'reset' then
 		anchor:Position()
-		alert_anchor:Position()
 	elseif msg == 'opt' or msg == 'options' then
 		addon.ShowOptions()
 	else
@@ -889,13 +778,10 @@ end
 
 function addon:UpdateAnchors()
 	anchor:SetShown(opt.roll_anchor.visible)
-	alert_anchor:SetShown(opt.alert_anchor.visible)
 end
 
 function addon.ToggleAnchors()
-	local state = anchor:IsShown()
-	anchor:SetShown(not state)
-	alert_anchor:SetShown(not state)
+	anchor:SetShown(not anchor:IsShown())
 end
 
 do
@@ -1111,19 +997,17 @@ do
 		mouse_focus = self
 		GameTooltip:SetOwner(self.icon_frame, 'ANCHOR_TOPLEFT', 28, 0)
 		GameTooltip:SetHyperlink(self.link)
-		if opt.show_decided or opt.show_undecided then
-			if not IS_RETAIL then
-				AddTooltipLines(self, true)
-			end
-			if self.need.reason then
-				AddIneligibleReason(self.need, 1, .2, 0)
-			end
-			if self.greed.reason and self.greed.reason ~= self.need.reason then
-				AddIneligibleReason(self.greed, .8, .1, 0)
-			end
-			if self.disenchant and self.disenchant.reason then
-				AddIneligibleReason(self.disenchant, .6, .05, 0)
-			end
+		if not IS_RETAIL then
+			AddTooltipLines(self, true)
+		end
+		if self.need.reason then
+			AddIneligibleReason(self.need, 1, .2, 0)
+		end
+		if self.greed.reason and self.greed.reason ~= self.need.reason then
+			AddIneligibleReason(self.greed, .8, .1, 0)
+		end
+		if self.disenchant and self.disenchant.reason then
+			AddIneligibleReason(self.disenchant, .6, .05, 0)
 		end
 		if IsShiftKeyDown() then
 			GameTooltip_ShowCompareItem()
@@ -1390,7 +1274,6 @@ function addon:ApplyOptions()
 	self:UpdateRetailStatusEvents()
 
 	anchor:UpdateSVData(opt.roll_anchor)
-	alert_anchor:UpdateSVData(opt.alert_anchor)
 
 	self:SkinUpdate()
 

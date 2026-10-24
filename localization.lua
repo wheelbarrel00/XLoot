@@ -76,5 +76,12 @@ locales.ruRU["skin_svelte"] = "XLoot: Стройный"
 locales.ruRU["minimap_click_left"] = "ЛКМ: открыть настройки"
 locales.ruRU["minimap_click_right"] = "ПКМ: Что нового"
 locales.ruRU["discord_popup"] = "Присоединяйтесь к сообществу XLoot, чтобы получить помощь, оставить отзыв и узнавать об обновлениях.\n\nСкопируйте приглашение ниже (оно уже выделено — просто нажмите Ctrl+C):"
+locales.ruRU["minimap_click_shift"] = "Shift+ЛКМ: переключить быстрый автолут"
+locales.ruRU["speedy_state"] = "Быстрый автолут: %s"
+locales.ruRU["state_on"] = "ВКЛ"
+locales.ruRU["state_off"] = "ВЫКЛ"
+locales.ruRU["speedy_unavailable"] = "Для быстрого автолута нужно включить модуль XLoot Frame."
+locales.ruRU["speedy_usage"] = "Использование: /xlspeedy переключает быстрый автолут. /xlspeedy on или /xlspeedy off включает или выключает его напрямую."
+locales.ruRU["binding_toggle_speedy"] = "Переключить быстрый автолут"
 
 XLoot.L = CompileLocales(locales)

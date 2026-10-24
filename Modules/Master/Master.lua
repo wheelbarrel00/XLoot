@@ -15,7 +15,6 @@ local my_index, banker_index, disenchanter_index
 local candidate, color, lclass, className, slot, info, opt
 local roll_pending
 local GroupLootDropDown
-local LD
 
 local defaults = {
 	profile = {
@@ -545,8 +544,6 @@ hooksecurefunc("MasterLooterFrame_Show", function(frame)
 		MasterLooterFrame:Hide()
 	end
 end)
-
-BINDING_HEADER_XLOOTMASTER = "XLootMaster"
 
 StaticPopupDialogs["CONFIRM_XLOOT_DISTRIBUTION"] = {
 	text = CONFIRM_LOOT_DISTRIBUTION,

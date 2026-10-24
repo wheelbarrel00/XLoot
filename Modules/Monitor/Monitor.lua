@@ -731,7 +731,6 @@ local function test_skill(event)
 end
 
 local function test_battlepet(event)
-	print("Testing battlepet event")
 	addon.LOOT_EVENT('item', "LOOT_ITEM_PUSHED_SELF", random_player(true), "|cff0070dd|Hbattlepet:868:1:3:158:10:12:0x0000000000000000|h[Pandaren Water Spirit]|h|r", 1)
 end
 
@@ -772,9 +771,6 @@ local function queue_update(self, elapsed)
 			if v[1] < time then
 				-- Drop the entry before running it, so a test that throws cannot wedge the queue open forever.
 				queue[k] = nil
-				if v[3] then
-					print("Testing "..v[3])
-				end
 				v[2](select(3, unpack(v)))
 			end
 		end

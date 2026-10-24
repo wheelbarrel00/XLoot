@@ -65,30 +65,6 @@ XLootTooltip = CreateFrame('GameTooltip', 'XLootTooltip', nil, 'GameTooltipTempl
 local tooltip = XLootTooltip
 tooltip:SetOwner(WorldFrame, "ANCHOR_NONE")
 
-local bind_types = {
-	[ITEM_BIND_ON_PICKUP] = 'pickup',
-	[ITEM_BIND_ON_EQUIP] = 'equip',
-	[ITEM_BIND_ON_USE] = 'use'
-}
-
-local tooltip_lines = {
-	XLootTooltipTextLeft2,
-	XLootTooltipTextLeft3,
-	XLootTooltipTextLeft4,
-	XLootTooltipTextLeft5
-}
-
-function XLoot.GetItemBindType(link)
-	tooltip:ClearLines()
-	tooltip:SetHyperlink(link)
-	for i=1, #tooltip_lines do
-		local value = bind_types[tooltip_lines[i]:GetText()]
-		if value then
-			return value
-		end
-	end
-end
-
 function XLoot.CanEquipItem(link)
 	if issecret and issecret(link) then return false end
 	if not C_Item.IsEquippableItem(link) then

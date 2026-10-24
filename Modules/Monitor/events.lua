@@ -25,33 +25,16 @@ local issecret = issecretvalue -- 12.0 secret values, nil pre-12.0
 			amount
 		event: 'skill'
 			skill_name, rank
-
-	LootEvents:RegisterGroupCallback(func)
-		Triggers func when "Group" loot mode events are received
-		event: 'selected'
-			item_link, player_name, roll_type
-		event: 'rolled'
-			item_link, player_name, roll_type, roll_number
-		event: 'won'
-			item_link, player_name
-		event: 'allpass'
-			item_link
 --]]
 
-lib.callbacks = lib.callbacks or { loot = {}, group = {} }
-local lootcb, groupcb = lib.callbacks.loot, lib.callbacks.group
+lib.callbacks = lib.callbacks or { loot = {} }
+local lootcb = lib.callbacks.loot
 
 local need_loot = next(lootcb) and true or false
-local need_group = next(groupcb) and true or false
 
 function lib:RegisterLootCallback(func)
 	table.insert(lootcb, func)
 	need_loot = true
-end
-
-function lib:RegisterGroupCallback(func)
-	table.insert(groupcb, func)
-	need_group = true
 end
 
 local current_pattern = nil
@@ -61,49 +44,12 @@ local function trigger_loot(event, ...)
 	end
 end
 
-local activerolls = 0
-local function trigger_group(event, ...)
-	for _, func in ipairs(groupcb) do
-		func(event, current_pattern, ...)
-	end
-	if event == 'won' or event == 'allpass' then
-		activerolls = max(0, activerolls - 1)
-	end
-end
-
-
-
--- Catch latent rolls
-if IsInGroup() then
-	for i=1,200 do
-		local time = GetLootRollTimeLeft(i)
-		if time > 0 then
-			activerolls = activerolls + 1
-		end
-	end
-end
-
 local Deformat = XLoot.Deformat
 
-local loot_patterns, group_patterns, unsortedloot, currentsort, system_patterns
-
-local sort, group = table.sort
-local function sort_func(a, b)
-	return a[group] < b[group]
-end
+local loot_patterns, system_patterns
 
 local function Handler(text)
 	if issecret and issecret(text) then return end
-	if need_group and activerolls > 0 then
-		for k, v in ipairs(group_patterns) do
-			local m1, m2, m3, m4 = Deformat(text, v[1])
-			if m1 then
-				current_pattern = v[3]
-				return v[2](m1, m2, m3, m4)
-			end
-		end
-	end
-
 	if need_loot then
 		for i, v in ipairs(loot_patterns) do
 			local m1, m2, m3, m4 = Deformat(text, v[1])
@@ -147,16 +93,6 @@ event("CHAT_MSG_LOOT", Handler)
 event("CHAT_MSG_MONEY", Handler)
 event("CHAT_MSG_CURRENCY", Handler)
 event("CHAT_MSG_SYSTEM", SystemHandler)
-
--- Only match the group patterns while a roll is actually happening
-event("START_LOOT_ROLL", function()
-	activerolls = activerolls + 1
-	end)
--- 2 second delay needed?
-local max = math.max
-event("CANCEL_LOOT_ROLL", function()
-	--activerolls = max(0, activerolls - 1)
-end)
 
 local player = UnitName('player')
 
@@ -348,50 +284,6 @@ local SkillHandler = FeedHandler(skill_patterns)
 event("CHAT_MSG_COMBAT_FACTION_CHANGE", FactionHandler)
 event("CHAT_MSG_COMBAT_HONOR_GAIN", HonorHandler)
 event("CHAT_MSG_SKILL", SkillHandler)
-
-group_patterns = { }
-do
-	local function handler(str, func)
-		table.insert(group_patterns, { _G[str], func, str })
-	end
-
-	-- Roll selected handler (You select Greed for XXXX, etc)
-	local function selected(str, rtype, own)
-		handler(str, function(who, item)
-			if own then
-				item, who = who, player
-			end
-			trigger_group('selected', item, who, rtype)
-		end)
-	end
-
-	-- Rolled handler (XXXX roll - # by xxxxx, etc)
-	local function rolled(str, rtype, own)
-		handler(str, function(roll, item, who)
-			trigger_group('rolled', item, (own or who == YOU) and player or who, rtype, tonumber(roll)) 
-		end)
-	end
-
-	-- Order matters - the more specific patterns have to be tried first
-	selected('LOOT_ROLL_DISENCHANT', 'disenchant')
-	selected('LOOT_ROLL_GREED', 'greed')
-	selected('LOOT_ROLL_NEED', 'need')
-	selected('LOOT_ROLL_DISENCHANT_SELF', 'disenchant', true)
-	selected('LOOT_ROLL_GREED_SELF', 'greed', true)
-	selected('LOOT_ROLL_NEED_SELF', 'need', true)
-	selected('LOOT_ROLL_PASSED_AUTO', 'pass')
-	selected('LOOT_ROLL_PASSED_AUTO_FEMALE', 'pass')
-	selected('LOOT_ROLL_PASSED_SELF_AUTO', 'pass', true)
-	handler('LOOT_ROLL_ALL_PASSED', function(item) trigger_group('allpass', item) end)
-	selected('LOOT_ROLL_PASSED_SELF', 'pass', true)
-	selected('LOOT_ROLL_PASSED', 'pass')
-	rolled('LOOT_ROLL_ROLLED_DE', 'disenchant')
-	rolled('LOOT_ROLL_ROLLED_GREED', 'greed')
-	rolled('LOOT_ROLL_ROLLED_NEED', 'need') 
-	rolled('LOOT_ROLL_ROLLED_NEED_ROLE_BONUS', 'need')
-	handler('LOOT_ROLL_YOU_WON', function(item) trigger_group('won', item, player) end)
-	handler('LOOT_ROLL_WON', function(who, item) trigger_group('won', item, who == YOU and player or who) end)
-end
 
 --@do-not-package@
 local test = false

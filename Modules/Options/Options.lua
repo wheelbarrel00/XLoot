@@ -588,7 +588,7 @@ function addon:OnEnable()
 				{ "equip_prefix" },
 				{ "prefix_equippable", "input", requires = "equip_prefix" },
 				{ "prefix_upgrade", "input" },
-				{ "show_time_remaining", name = L.Group.text_time },
+				{ "show_time_remaining", name = L.Group.text_time, desc = L.Group.text_time_desc },
 				{ "show_undecided" },
 				{ "role_icon" },
 				{ "win_icon" },
@@ -784,40 +784,13 @@ function addon:OnEnable()
 		})
 	end
 
---[=[ 	-- Generate reset staticpopup
-	if not StaticPopupDialogs['XLOOT_RESETPROFILE'] then
-		StaticPopupDialogs['XLOOT_RESETPROFILE'] = {
-			preferredIndex = 3,
-			text = L.confirm_reset_profile,
-			button1 = ACCEPT,
-			button2 = CANCEL,
-			OnAccept = function() addon:ResetProfile() end,
-			exclusive = true,
-			timeout = 0,
-			whileDead = true,
-			hideOnEscape = true,
-		}
-	end--]=]
-
 	if Settings then
 		addon:Init()
 	end
 end
 
-function addon:OnInitialize()
-
-end
-
 local function PanelDefault(self)
-	-- StaticPopup_Show("XLOOT_RESETPROFILE")
 	addon:ResetProfile()
-end
-
-local function PanelOkay(self)
-end
-
-local function PanelCancel(self)
-	-- Restore old options?
 end
 
 function addon:ResetProfile()

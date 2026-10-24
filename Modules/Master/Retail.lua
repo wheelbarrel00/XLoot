@@ -439,5 +439,3 @@ function XLootButtonOnClick(row, button, handled)
 	end
 	return XLootButtonOnClick_Orig(row, button, handled)
 end
-
-BINDING_HEADER_XLOOTMASTER = "XLootMaster"

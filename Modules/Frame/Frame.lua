@@ -1279,7 +1279,7 @@ local function SpeedyVacuum()
 	SpeedyStart()
 end
 
-local _bag_slots, GetItemBindType = {}, XLoot.GetItemBindType
+local _bag_slots = {}
 -- Loot slots deferred by the filters because the item was not cached yet, reconsidered once BoPRefresh has it.
 local auto_retry = {}
 function XLootFrame:Update(no_snap, is_refresh, game_autoloot)
@@ -1554,16 +1554,6 @@ function addon:MODIFIER_STATE_CHANGED()
 		mouse_focus:ShowTooltip()
 	end
 end
-
-local function option_handler(msg)
-	if not addon:SlashHandler(msg) then
-		addon:ShowOptions()
-	end
-end
-
-
--- LootSlotHasItem() is generic since MoP - it covers item, coin, and currency. LootSlotIsCoin() and friends are replaced by GetLootSlotType(slot) == LOOT_SLOT_* checks.
-
 
 --@do-not-package@
 local AC = LibStub('AceConsole-2.0', true)

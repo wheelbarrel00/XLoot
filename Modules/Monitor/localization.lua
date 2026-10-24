@@ -46,5 +46,7 @@ local locales = {
 --@localization(locale="zhTW", format="lua_additive_table", table-name="locales.zhTW", handle-subnamespaces="subtable", handle-unlocalized="ignore", namespace="Monitor")@
 
 locales.ruRU["anchor"] = "Монитор добычи"
+locales.ruRU["capped"] = "лимит"
+locales.ruRU["weekly_cap"] = "недельный лимит"
 
 XLoot:Localize("Monitor", locales)

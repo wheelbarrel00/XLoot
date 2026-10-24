@@ -6,6 +6,20 @@ history lives in the original project's git tags.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [12.20.1] - 2026-10-24
+
+### Improvements
+- **Russian translation completed.** The Loot Monitor's reputation, experience, honor, skill-up and
+  currency cap options, the Speedy auto-loot toggle messages and key binding, and the minimap button
+  tooltip are now in Russian too. The System gold option's description no longer has an English item
+  name in the middle of it. Contributed by kolechkin.
+- The "Looting errors in chat" option now shows its explanation when you hover over it.
+- The Group Loot "Show time remaining" option now shows its explanation when you hover over it.
+- The Loot Monitor's "Click to test settings" button no longer prints a "Testing ..." line in chat for
+  every test row.
+- Removed leftover code for the old loot alert and bonus roll features, which had been switched off since
+  Legion, along with their hidden settings. Nothing you see changes.
+
 ## [12.20.0] - 2026-10-20
 
 ### Features

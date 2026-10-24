@@ -2,7 +2,6 @@
 local locales = {
 	enUS = {
 		anchor = "Group Rolls",
-		alert_anchor = "Loot Popups",
 		undecided = "Undecided",
 		awaiting = "Rolling...",
 		auto_roll_saved = "XLoot: auto-%s set for %s",
@@ -54,7 +53,6 @@ local locales = {
 --@localization(locale="zhTW", format="lua_additive_table", table-name="locales.zhTW", handle-subnamespaces="subtable", handle-unlocalized="ignore", namespace="Group")@
 
 locales.ruRU["anchor"] = "Броски группы"
-locales.ruRU["alert_anchor"] = "Всплывающие окна с добычей"
 locales.ruRU["undecided"] = "Не определились"
 locales.ruRU["awaiting"] = "Идёт бросок..."
 locales.ruRU["auto_roll_saved"] = "XLoot: автовыбор «%s» задан для %s"
