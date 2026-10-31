@@ -4,7 +4,7 @@ XLootMonitor = CreateFrame("Frame", "XLootMonitor", UIParent)
 XLootMonitor.addon = addon
 
 local print, opt, eframe, anchor = print
-local MoneyString, FancyPlayerName = XLoot.MoneyString, XLoot.FancyPlayerName
+local MoneyString, FancyPlayerName, SafeSetFont = XLoot.MoneyString, XLoot.FancyPlayerName, XLoot.SafeSetFont
 local table_insert, table_remove = table.insert, table.remove
 local me = UnitName("player")
 
@@ -567,15 +567,15 @@ do
 		self.name:ClearAllPoints()
 		self.name:SetPoint(a, self.icon_frame, b, 2 * xmod, 0)
 		self.name:SetJustifyH(a)
-		self.name:SetFont(opt.font, opt.font_size_loot, opt.font_flag)
+		SafeSetFont(self.name, opt.font, opt.font_size_loot, opt.font_flag)
 
 		self.text:ClearAllPoints()
 		self.text:SetPoint(a, self.name, b)
 		self.text:SetJustifyH(a)
-		self.text:SetFont(opt.font, opt.font_size_loot, opt.font_flag)
+		SafeSetFont(self.text, opt.font, opt.font_size_loot, opt.font_flag)
 
-		self.ilvl:SetFont(opt.font, opt.font_size_ilvl, opt.font_flag)
-		self.total:SetFont(opt.font, opt.font_size_quantity, opt.font_flag)
+		SafeSetFont(self.ilvl, opt.font, opt.font_size_ilvl, opt.font_flag)
+		SafeSetFont(self.total, opt.font, opt.font_size_quantity, opt.font_flag)
 
 		self:FitToText()
 	end

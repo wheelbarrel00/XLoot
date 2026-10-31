@@ -53,8 +53,8 @@ local GetContainerNumFreeSlots = C_Container and C_Container.GetContainerNumFree
 -- Gate on the flavor, not the field: Classic ships the same BagIndex enum but container 5 is a bank bag there. Counted apart from the family loop because the reagent bag reports family 0.
 local REAGENT_BAG = XLoot.IS_RETAIL_ENGINE and Enum and Enum.BagIndex and Enum.BagIndex.ReagentBag or nil
 local GetItemInfo = C_Item and C_Item.GetItemInfo or GetItemInfo
-local SendChatMessage = XLoot.SendChatMessage
-local issecret = issecretvalue -- 12.0 secret values, nil pre-12.0
+local SendChatMessage, SafeSetFont = XLoot.SendChatMessage, XLoot.SafeSetFont
+local issecret = issecretvalue
 
 local print, wprint = print, print
 local function xprint(text)
@@ -239,8 +239,8 @@ function addon:ApplyOptions(in_options)
 		XLootFrame:Update(true)
 	end
 	XLootFrame:ParseAutolootList()
-	-- A profile change also lands here, and the preview frame only exists once the options panel has been shown.
-	if in_options and XLootFakeFrame then
+	-- A profile change also lands here. The preview only exists once the options panel has been shown, and a failed build leaves the global half-built.
+	if in_options and XLootFakeFrame and XLootFakeFrame.built then
 		local Fake = XLootFakeFrame
 		Fake.opt = opt
 		Fake:UpdateAppearance()
@@ -248,10 +248,7 @@ function addon:ApplyOptions(in_options)
 		wipe(Fake.slots)
 		for i,v in ipairs(preview_loot) do
 			local t = GetItemInfoTable(v[1])
-			-- local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(v[1])
-			if not t then
-				-- xprint("Error: Failed to get information for an item in the configuration preview window. Please re-open the options window in a moment.")
-			else
+			if t then
 				t.quantity = 1
 				t.slotType = LOOT_SLOT_ITEM
 				t.preview_upgrade = (i == #preview_loot)
@@ -265,7 +262,6 @@ function addon:ApplyOptions(in_options)
 				max_quality = math.max(max_quality, t.quality)
 			end
 		end
-		-- !CLASSIC
 		if C_CurrencyInfo then
 			for i,id in ipairs(preview_currency) do
 				local c = C_CurrencyInfo.GetCurrencyInfo(id)
@@ -643,14 +639,14 @@ do
 		self:SetAlpha(opt.loot_alpha)
 
 
-		self.text_name:SetFont(opt.font, opt.font_size_loot, opt.font_flag_loot)
-		self.text_info:SetFont(opt.font, opt.font_size_info, opt.font_flag_loot)
-		self.text_sell:SetFont(opt.font, opt.font_size_info, opt.font_flag)
-		self.text_quantity:SetFont(opt.font, opt.font_size_quantity, opt.font_flag)
-		self.text_bind:SetFont(opt.font, 8, opt.font_flag)
-		self.text_locked:SetFont(opt.font, 9, opt.font_flag)
+		SafeSetFont(self.text_name, opt.font, opt.font_size_loot, opt.font_flag_loot)
+		SafeSetFont(self.text_info, opt.font, opt.font_size_info, opt.font_flag_loot)
+		SafeSetFont(self.text_sell, opt.font, opt.font_size_info, opt.font_flag)
+		SafeSetFont(self.text_quantity, opt.font, opt.font_size_quantity, opt.font_flag)
+		SafeSetFont(self.text_bind, opt.font, 8, opt.font_flag)
+		SafeSetFont(self.text_locked, opt.font, 9, opt.font_flag)
 		self.text_locked:SetText(LOCKED) -- Can't set text until font is set
-		self.text_button_auto:SetFont(opt.font, opt.font_size_button_auto, opt.font_flag)
+		SafeSetFont(self.text_button_auto, opt.font, opt.font_size_button_auto, opt.font_flag)
 		self.text_button_auto:SetText(L.button_auto)
 		self.button_auto:SetWidth(self.text_button_auto:GetStringWidth()+4)
 		self.button_auto:SetHeight(self.text_button_auto:GetStringHeight()+4)
@@ -980,7 +976,7 @@ do
 	local function BottomButton(frame, name, text, justify)
 		local b = CreateFrame('Button', name, frame)
 		b.text = b:CreateFontString(name..'Text', 'OVERLAY')
-		b.text:SetFont(frame.opt.font, frame.opt.font_size_bottombuttons)
+		SafeSetFont(b.text, frame.opt.font, frame.opt.font_size_bottombuttons)
 		b.text:SetText('|c22AAAAAA'..text)
 		b.text:SetJustifyH(justify)
 		b.text:SetAllPoints(b)
@@ -1073,8 +1069,8 @@ do
 			self.old_close:Hide()
 		end
 
-		self.close.text:SetFont(opt.font, opt.font_size_bottombuttons)
-		self.link.text:SetFont(opt.font, opt.font_size_bottombuttons)
+		SafeSetFont(self.close.text, opt.font, opt.font_size_bottombuttons)
+		SafeSetFont(self.link.text, opt.font, opt.font_size_bottombuttons)
 	end
 
 	function addon:BuildLootFrame(f)

@@ -15,7 +15,7 @@ local HistoryGetPlayerInfo = C_LootHistory and C_LootHistory.GetPlayerInfo
 local HistoryGetNumItems = C_LootHistory and C_LootHistory.GetNumItems
 -- Retail only, added in 10.1.0. Nil on Classic.
 local HistoryGetSortedInfoForDrop = C_LootHistory and C_LootHistory.GetSortedInfoForDrop
-local CanEquipItem, IsPawnUpgrade, FancyPlayerName = XLoot.CanEquipItem, XLoot.IsPawnUpgrade, XLoot.FancyPlayerName
+local CanEquipItem, IsPawnUpgrade, FancyPlayerName, SafeSetFont = XLoot.CanEquipItem, XLoot.IsPawnUpgrade, XLoot.FancyPlayerName, XLoot.SafeSetFont
 local IsIlvlUpgrade, IsNewAppearance, TimeFractionColor = XLoot.IsIlvlUpgrade, XLoot.IsNewAppearance, XLoot.TimeFractionColor
 local RollFramePrototype
 -- Defined in the retail roll-status block, used above it.
@@ -30,7 +30,7 @@ local HAS_TRANSMOG = IS_RETAIL
 local GetItemInfo = C_Item and C_Item.GetItemInfo or GetItemInfo
 local GetDetailedItemLevelInfo = C_Item and C_Item.GetDetailedItemLevelInfo or GetDetailedItemLevelInfo
 local GetItemInfoInstant = C_Item and C_Item.GetItemInfoInstant or GetItemInfoInstant
-local issecret = issecretvalue -- 12.0 secret values, nil pre-12.0
+local issecret = issecretvalue
 
 local ENUM_LOOT_GROUP = Enum and Enum.LootMethod and Enum.LootMethod.Group
 local ENUM_LOOT_NEEDBEFOREGREED = Enum and Enum.LootMethod and Enum.LootMethod.Needbeforegreed
@@ -294,6 +294,7 @@ function addon:START_LOOT_ROLL(id, length, ongoing)
 	frame.have_rolled = false
 	frame.lead_type = 'pass'
 	frame.drop_key = nil
+	frame.roll_infos = nil
 	frame.awaiting = nil
 	frame.await_until = nil
 
@@ -691,6 +692,7 @@ local function ProcessRetailDrop(encounterID, lootListID)
 	local completed = drop.winner or drop.allPassed
 	local frame = ResolveRetailFrame(encounterID, lootListID, drop.itemHyperlink, not completed)
 	if not frame or frame.over then return end
+	frame.roll_infos = drop.rollInfos
 
 	if completed then
 		CompleteRetailDrop(frame, drop)
@@ -728,7 +730,9 @@ local function ProcessRetailDrop(encounterID, lootListID)
 	frame.greed:SetText(greed)
 	if frame.transmog then frame.transmog:SetText(transmog) end
 	frame.pass:SetText(pass)
-	if mouse_focus == frame then frame:OnEnter() end
+	if mouse_focus and (mouse_focus == frame or mouse_focus.parent == frame) then
+		mouse_focus:OnEnter()
+	end
 end
 
 function addon:LOOT_HISTORY_UPDATE_DROP(encounterID, lootListID)
@@ -741,6 +745,7 @@ function addon:LOOT_HISTORY_CLEAR_HISTORY()
 	wipe(drop_to_roll)
 	for _, frame in pairs(rolls) do
 		frame.drop_key = nil
+		frame.roll_infos = nil
 		if frame.awaiting then anchor:Pop(frame) end
 	end
 end
@@ -755,6 +760,7 @@ function addon:UpdateRetailStatusEvents()
 		eframe:UnregisterEvent('LOOT_HISTORY_CLEAR_HISTORY')
 		-- No result can arrive once the events are gone, so held bars would sit until they time out.
 		for _, frame in pairs(rolls) do
+			frame.roll_infos = nil
 			if frame.awaiting then anchor:Pop(frame) end
 		end
 	end
@@ -786,24 +792,27 @@ end
 
 do
 	local sf = string.format
+	local function RollLine(name, class, roll, is_winner, is_me)
+		local text, r, g, b, color = FancyPlayerName(name, class, opt)
+		if roll ~= nil then
+			if is_winner then
+				color = '44ff22'
+			elseif is_me then
+				color = 'ff2244'
+			else
+				color = 'CCCCCC'
+			end
+			GameTooltip:AddLine(sf('   |cff%s%s|r  %s', color, roll, text), r, g, b)
+		else
+			GameTooltip:AddLine('   '..text, r, g, b)
+		end
+	end
+
 	local function RollLines(list, hid)
 		for _,pid in pairs(list) do
-			local name, class, rtype, roll, is_winner, is_me = HistoryGetPlayerInfo(hid, pid)
-			-- TODO- ACCOUNT FOR MISSING PLAYERS BETTER
+			local name, class, _, roll, is_winner, is_me = HistoryGetPlayerInfo(hid, pid)
 			if not name then return nil end
-			local text, r, g, b, color = FancyPlayerName(name, class, opt)
-			if roll ~= nil then
-				if is_winner then
-					color = '44ff22'
-				elseif is_me then
-					color = 'ff2244'
-				else
-					color = 'CCCCCC'
-				end
-				GameTooltip:AddLine(sf('   |cff%s%s|r  %s', color, roll, text), r, g, b)
-			else
-				GameTooltip:AddLine('   '..text, r, g, b)
-			end
+			RollLine(name, class, roll, is_winner, is_me)
 		end
 	end
 
@@ -886,6 +895,49 @@ do
 		return true
 	end
 
+	-- A nil state_type lists the undecided, the one state retail_state_type leaves out.
+	local function RetailRollLines(infos, state_type, label, r, g, b)
+		local listed = false
+		for _, info in ipairs(infos) do
+			if retail_state_type[info.state] == state_type
+				and not (issecret and (issecret(info.playerName) or issecret(info.playerClass) or (info.roll and issecret(info.roll)))) then
+				if not listed then
+					GameTooltip:AddLine(label, r, g, b)
+					listed = true
+				end
+				RollLine(info.playerName, info.playerClass, info.roll, info.isWinner, info.isSelf)
+			end
+		end
+	end
+
+	local function AddRetailTooltipLines(self, show_all, show)
+		local infos = self.roll_infos
+		if not infos or #infos == 0 then return end
+
+		if show_all then
+			GameTooltip:AddLine('.', 0, 0, 0)
+		end
+		if show_all or show == 1 then
+			RetailRollLines(infos, 'need', NEED, .2, 1, .1)
+		end
+		if show_all or show == 4 then
+			RetailRollLines(infos, 'transmog', TRANSMOGRIFY or 'Transmog', .9, .5, .9)
+		end
+		if show_all or show == 2 then
+			RetailRollLines(infos, 'greed', GREED, .1, .2, 1)
+		end
+		if show_all or show == 0 then
+			RetailRollLines(infos, 'pass', PASS, .7, .7, .7)
+		end
+		if show_all and opt.show_undecided then
+			RetailRollLines(infos, nil, L.undecided, .7, .3, .2)
+		end
+
+		GameTooltip:Show()
+	end
+
+	local AddRollLines = IS_RETAIL and AddRetailTooltipLines or AddTooltipLines
+
 	local RollButtonPrototype = XLoot.NewPrototype()
 	do
 		function RollButtonPrototype:OnClick()
@@ -914,9 +966,7 @@ do
 		function RollButtonPrototype:OnEnter()
 			mouse_focus = self
 			GameTooltip:SetOwner(self, 'ANCHOR_TOPLEFT')
-			if not IS_RETAIL then
-				AddTooltipLines(self.parent, false, self.type)
-			end
+			AddRollLines(self.parent, false, self.type)
 			if GameTooltip:NumLines() == 0 then
 				GameTooltip:SetText(self.label, unpack(self.label_colors))
 				GameTooltip:Show()
@@ -986,7 +1036,7 @@ do
 		end
 
 		function RollButtonPrototype:ApplyOptions()
-			self.text:SetFont(opt.font, 12, opt.font_flag)
+			SafeSetFont(self.text, opt.font, 12, opt.font_flag)
 			self:SetWidth(opt.roll_button_size)
 			self:SetHeight(opt.roll_button_size)
 		end
@@ -997,9 +1047,7 @@ do
 		mouse_focus = self
 		GameTooltip:SetOwner(self.icon_frame, 'ANCHOR_TOPLEFT', 28, 0)
 		GameTooltip:SetHyperlink(self.link)
-		if not IS_RETAIL then
-			AddTooltipLines(self, true)
-		end
+		AddRollLines(self, true)
 		if self.need.reason then
 			AddIneligibleReason(self.need, 1, .2, 0)
 		end
@@ -1101,6 +1149,10 @@ do
 	end
 
 	function RollFramePrototype:Popped()
+		-- A hidden frame may never fire OnLeave, and a stale focus would open a tooltip on the recycled bar.
+		if mouse_focus and (mouse_focus == self or mouse_focus.parent == self) then
+			mouse_focus = nil
+		end
 		-- Roll ids are recycled, so a newer live roll may already own this id.
 		if rolls[self.rollid] == self then
 			rolls[self.rollid] = nil
@@ -1234,11 +1286,11 @@ do
 		if self.transmog then self.transmog:ApplyOptions() end
 		self.pass:ApplyOptions()
 
-		self.text_ilvl:SetFont(opt.font, 8, 'OUTLINE')
-		self.text_bind:SetFont(opt.font, 8, 'THICKOUTLINE')
-		self.text_time:SetFont(opt.font, 12, 'OUTLINE')
-		self.text_status:SetFont(opt.font, 12, opt.font_flag)
-		self.text_loot:SetFont(opt.font, 12, opt.font_flag)
+		SafeSetFont(self.text_ilvl, opt.font, 8, 'OUTLINE')
+		SafeSetFont(self.text_bind, opt.font, 8, 'THICKOUTLINE')
+		SafeSetFont(self.text_time, opt.font, 12, 'OUTLINE')
+		SafeSetFont(self.text_status, opt.font, 12, opt.font_flag)
+		SafeSetFont(self.text_loot, opt.font, 12, opt.font_flag)
 
 		self.text_time:SetShown(opt.show_time_remaining)
 		self.text_ilvl:SetShown(opt.text_ilvl)
@@ -1485,11 +1537,13 @@ function XLootGroup.TestSettings()
 						local me = { playerName = UnitName("player"), playerClass = select(2, UnitClass('player')), state = S.NeedMainSpec, roll = 71, isSelf = true }
 						local rival = { playerName = 'Player2', playerClass = 'PRIEST', state = S.NeedMainSpec, roll = 88, isSelf = false }
 						local winner = variant % 2 == 0 and me or rival
-						winner.isWinner = true
 						after(3, function() infos[#infos+1] = { playerName = 'Player1', playerClass = 'MAGE', state = S.Greed, roll = 42 } end, updated, enc, list)
 						after(5, function() infos[#infos+1] = rival end, updated, enc, list)
 						after(7, function() infos[#infos+1] = me end, updated, enc, list)
-						after(9, function() drop.winner = winner end, updated, enc, list)
+						after(9, function()
+							winner.isWinner = true
+							drop.winner = winner
+						end, updated, enc, list)
 					end
 				end
 			end

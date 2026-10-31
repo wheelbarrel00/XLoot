@@ -4,7 +4,7 @@ local buffer, print = {}, print
 
 local table_insert, table_concat, string_format = table.insert, table.concat, string.format
 
-local issecret = issecretvalue -- 12.0 secret values, nil pre-12.0
+local issecret = issecretvalue
 
 local coin_table = {
 	{ GOLD_AMOUNT, 0, "ffd700" },
@@ -228,6 +228,13 @@ function XLoot.ColorToHex(r, g, b)
 	return string_format('ff%02x%02x%02x', ColorByte(r), ColorByte(g), ColorByte(b))
 end
 
+-- A saved font can outlive the addon that shipped it. A missing file raises, and a string left with no font throws on SetText, so fall back without touching the saved choice.
+function XLoot.SafeSetFont(fontstring, font, size, flags)
+	if not pcall(fontstring.SetFont, fontstring, font, size, flags) or not fontstring:GetFont() then
+		fontstring:SetFont(STANDARD_TEXT_FONT, size, flags)
+	end
+end
+
 local dimensions = {
 	HEALER = '48:64',
 	DAMAGER = '16:32',
@@ -240,6 +247,10 @@ function XLoot.FancyPlayerName(name, class, opt)
 		role = UnitGroupRolesAssigned(name)
 	end
 	local short, realm = UnitName(name)
+	-- These can go secret for a name outside the group, such as a player who left mid-roll, and comparing a secret throws.
+	if issecret and (issecret(role) or (short and issecret(short)) or (realm and issecret(realm))) then
+		return name, c.r, c.g, c.b
+	end
 	if short then
 		name = short
 	end

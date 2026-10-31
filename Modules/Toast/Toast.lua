@@ -6,6 +6,7 @@ XLootToast.addon = addon
 local opt, eframe, anchor
 local me = UnitName("player")
 local issecret = issecretvalue
+local SafeSetFont = XLoot.SafeSetFont
 local table_insert, table_remove = table.insert, table.remove
 local floor, ceil, random = math.floor, math.ceil, math.random
 local GetItemInfo = C_Item.GetItemInfo
@@ -364,13 +365,13 @@ do
 		self.title:SetPoint("TOP" .. a, self.icon_frame, "TOP" .. b, 6 * xmod, -2)
 		self.title:SetPoint("TOP" .. b, self, "TOPRIGHT", -4 * xmod, -2)
 		self.title:SetJustifyH(a)
-		self.title:SetFont(opt.font, opt.font_size, opt.font_flag)
+		SafeSetFont(self.title, opt.font, opt.font_size, opt.font_flag)
 		self.name:ClearAllPoints()
 		self.name:SetPoint("BOTTOM" .. a, self.icon_frame, "BOTTOM" .. b, 6 * xmod, 2)
 		self.name:SetPoint("TOP" .. b, self, "RIGHT", -4 * xmod, 0)
 		self.name:SetJustifyH(a)
-		self.name:SetFont(opt.font, opt.font_size + 1, opt.font_flag)
-		self.count:SetFont(opt.font, opt.font_size, "THICKOUTLINE")
+		SafeSetFont(self.name, opt.font, opt.font_size + 1, opt.font_flag)
+		SafeSetFont(self.count, opt.font, opt.font_size, "THICKOUTLINE")
 		apply_mouse(self)
 	end
 

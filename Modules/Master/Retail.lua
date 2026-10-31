@@ -28,7 +28,7 @@ local defaults = {
 local opt
 local eframe = CreateFrame("Frame")
 local me
-local issecret = issecretvalue -- 12.0 secret values, nil pre-12.0
+local issecret = issecretvalue
 local SendChatMessage = XLoot.SendChatMessage
 
 function addon:OnInitialize()

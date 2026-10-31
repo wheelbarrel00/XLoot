@@ -6,6 +6,23 @@ local XLoot = select(2, ...)
 -- Newest first. Array order is the display order, so we never sort version strings.
 local updates = {
 	{
+		version = "12.21.0",
+		date = "2026-10-30",
+		changes = {
+			{
+				label = "See who rolled on the roll window",
+				type = "feature",
+				option = "Group Loot > What rolls to show",
+				description = "With Show roll results on, hover Need, Greed, Transmog or Pass on a roll window to see who picked it, in their class color, with their roll number once the game has one. The list updates as rolls come in. Hover the roll bar itself to see everyone at once, even after you have rolled. Retail and WoW Forever. Off by default. Try /xlgd to preview. Suggested by AlexGotcha.",
+			},
+			{
+				label = "A missing font no longer breaks XLoot",
+				type = "bugfix",
+				description = "If a font chosen in XLoot's options no longer existed, such as one from an addon you removed, the loot window could fail to open, errors piled up, and Reset to Defaults reported one too. XLoot now uses the game's default font until that font is back, and keeps your choice. Reported by Nesetalis.",
+			},
+		},
+	},
+	{
 		version = "12.20.0",
 		date = "2026-10-20",
 		changes = {

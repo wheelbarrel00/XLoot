@@ -3,7 +3,7 @@ local XLoot = select(2, ...)
 -- The retail engine already shows a vendor sell-price line in item tooltips. This only fills the gap on the Classic flavors, which don't.
 if XLoot.IS_RETAIL_ENGINE then return end
 
-local issecret = issecretvalue -- 12.0 secret values, nil pre-12.0
+local issecret = issecretvalue
 local GetItemInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
 local GetContainerItemInfo = C_Container and C_Container.GetContainerItemInfo
 local MoneyString = XLoot.MoneyString

@@ -6,6 +6,21 @@ history lives in the original project's git tags.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [12.21.0] - 2026-10-30
+
+### Features
+- **See who rolled on the roll window.** With Group Loot's "Show roll results" turned on, hovering Need, Greed,
+  Transmog or Pass lists who picked it, in their class color, with their roll number once the game has one. The
+  list updates as rolls come in. Hovering the roll bar itself shows everyone at once, even after you have rolled,
+  and includes "List waiting players" when that is on. Retail and WoW Forever. Off by default, under Group Loot >
+  What rolls to show. Suggested by AlexGotcha.
+
+### Bug Fixes
+- A font chosen in XLoot's options that no longer exists, such as one from an addon you removed, could stop the
+  loot window, roll bars, Loot Monitor rows and toasts from appearing, with errors on every loot. Opening the
+  options and Reset to Defaults threw errors too. XLoot now uses the game's default font until that font is back,
+  and keeps your choice. Reported by Nesetalis.
+
 ## [12.20.1] - 2026-10-24
 
 ### Improvements

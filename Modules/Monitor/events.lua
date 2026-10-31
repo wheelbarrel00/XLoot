@@ -4,7 +4,7 @@ local print = print
 
 local GetItemInfo = C_Item and C_Item.GetItemInfo or GetItemInfo
 
-local issecret = issecretvalue -- 12.0 secret values, nil pre-12.0
+local issecret = issecretvalue
 
 --[[// Usage
 	Callbacks receive (event, pattern, ...)
